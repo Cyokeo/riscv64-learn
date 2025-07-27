@@ -1,6 +1,7 @@
 /* RISC-V64 BIOS 链接脚本 */
 
 OUTPUT_ARCH(riscv)
+/* cause this is bios, _start must locate at 0x20000000 for riscv virt machine */
 ENTRY(_start)
 
 MEMORY
