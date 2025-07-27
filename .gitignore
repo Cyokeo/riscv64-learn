@@ -1,0 +1,112 @@
+# RISC-V BIOS 固件项目 .gitignore
+
+# 编译生成的目标文件
+*.o
+*.obj
+
+# 链接生成的可执行文件
+*.elf
+*.exe
+
+# 二进制文件
+*.bin
+
+# 反汇编文件
+*.dis
+*.lst
+
+# 符号表文件
+*.map
+*.sym
+
+# 调试信息文件
+*.dwarf
+*.debug
+
+# pflash镜像文件
+pflash.img
+*.img
+
+# 链接器生成的文件
+*.out
+
+# 汇编器临时文件
+*.s~
+*.S~
+
+# 编辑器临时文件
+*~
+*.swp
+*.swo
+.*.swp
+.*.swo
+
+# IDE文件
+.vscode/
+.idea/
+*.project
+*.cproject
+*.settings/
+
+# 操作系统生成的文件
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 日志文件
+*.log
+
+# Core dumps
+core
+core.*
+
+# GDB相关文件
+.gdb_history
+gdb.txt
+
+# QEMU相关临时文件
+qemu-*.log
+*.qcow2
+
+# 备份文件
+*.bak
+*.backup
+*.orig
+
+# 压缩文件 (通常不需要版本控制)
+*.tar.gz
+*.zip
+*.7z
+*.rar
+
+# 构建目录 (如果使用)
+build/
+dist/
+output/
+
+# 交叉编译工具链 (如果本地安装)
+toolchain/
+riscv*/
+
+# 测试输出文件
+test_output.txt
+serial.log
+
+# Makefile生成的依赖文件
+*.d
+.depend
+
+# 临时补丁文件
+*.patch
+*.diff
+
+# 文档生成文件
+docs/html/
+docs/latex/
+*.pdf
+*.ps
+*.dvi
