@@ -6,37 +6,72 @@ CROSS_COMPILE_PATH = /Volumes/OuterSpace-MBA/Workspace/starFive/tools/riscv64-un
 CROSS_COMPILE ?= $(CROSS_COMPILE_PATH)/riscv64-unknown-elf-
 
 # 工具链
-AS = $(CROSS_COMPILE)as
-LD = $(CROSS_COMPILE)ld
-OBJCOPY = $(CROSS_COMPILE)objcopy
-OBJDUMP = $(CROSS_COMPILE)objdump
+CC      := $(CROSS_COMPILE)gcc
+AS      := $(CROSS_COMPILE)as
+LD      := $(CROSS_COMPILE)ld
+OBJCOPY := $(CROSS_COMPILE)objcopy
+SIZE    := $(CROSS_COMPILE)size
+OBJDUMP := $(CROSS_COMPILE)objdump
+
+# 目录结构
+SRC_DIR     := src
+INC_DIR     := inc
+BUILD_DIR   := build
+OBJ_DIR     := $(BUILD_DIR)/obj
+DEP_DIR     := $(BUILD_DIR)/dep
+
+# 源文件
+ASM_SRCS    := bios.S
+C_SRCS      := $(wildcard $(SRC_DIR)/*.c)
+
+# 输出文件
+TARGET      := $(BUILD_DIR)/bios
 
 # 编译选项
-ASFLAGS = -march=rv64ima -mabi=lp64
-LDFLAGS = -T link.ld -nostdlib
+ARCH        := rv64imac
+ABI         := lp64
+INCLUDES    := -I$(INC_DIR)
 
-# 目标文件
-TARGET = riscv_bios
-SOURCES = bios.S
-OBJECTS = $(SOURCES:.S=.o)
+CFLAGS      := -O2 -march=$(ARCH) -mabi=$(ABI) -mcmodel=medany $(INCLUDES) \
+               -ffreestanding -nostdlib -fno-builtin \
+               -Wall -Wextra -Werror 
 
-# 默认目标
-all: $(TARGET).bin pflash.img
+ASFLAGS     := -march=$(ARCH) -mabi=$(ABI)
+LDFLAGS     := -T link.ld -nostdlib
+DEPFLAGS    = -MT $@ -MMD -MP -MF $(DEP_DIR)/$*.d
 
-# 编译汇编文件
-%.o: %.S
-	$(AS) $(ASFLAGS) -o $@ $<
+# 自动生成对象文件和依赖文件
+OBJS        := $(addprefix $(OBJ_DIR)/,$(notdir $(ASM_SRCS:.S=.o))) \
+               $(addprefix $(OBJ_DIR)/,$(notdir $(C_SRCS:.c=.o)))
 
-# 链接生成ELF文件
-$(TARGET).elf: $(OBJECTS) link.ld
-	$(LD) $(LDFLAGS) -o $@ $(OBJECTS)
+# 确保目录存在
+$(shell mkdir -p $(BUILD_DIR) $(OBJ_DIR) $(DEP_DIR) >/dev/null)
 
-# 生成二进制文件
+# default target
+all: $(TARGET).bin $(TARGET).img
+
 $(TARGET).bin: $(TARGET).elf
 	$(OBJCOPY) -O binary $< $@
+	@echo "Generated binary: $@"
+
+$(TARGET).elf: $(OBJS) link.ld
+	$(LD) $(LDFLAGS) -o $@ $(OBJS)
+	$(SIZE) $@
+
+# 汇编文件编译
+$(OBJ_DIR)/%.o: %.S | $(DEP_DIR)
+	$(CC) $(ASFLAGS) $(CFLAGS) -c $< -o $@
+
+# C文件编译（带依赖生成）
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(DEP_DIR)
+	$(CC) $(CFLAGS) $(DEPFLAGS) -c $< -o $@
+
+# 包含自动生成的依赖
+-include $(wildcard $(DEP_DIR)/*.d)
+
 
 # 创建pflash镜像文件 (32MB, 填充0xFF)
-pflash.img: $(TARGET).bin
+$(TARGET).img: $(TARGET).bin
 	# 创建确切32MB的文件，填充0xFF (Flash擦除状态)
 	python3 -c "with open('$@', 'wb') as f: f.write(b'\xFF' * 33554432)"
 	# 将BIOS二进制文件写入pflash开头
@@ -48,7 +83,7 @@ $(TARGET).dis: $(TARGET).elf
 
 # 清理
 clean:
-	rm -f *.o *.elf *.bin *.dis pflash.img
+	rm -rf $(BUILD_DIR)
 
 # 在QEMU中测试 - 使用-bios选项
 test: $(TARGET).bin
@@ -63,23 +98,25 @@ test: $(TARGET).bin
 # -drive : set pflash0, its base address is 0x20000000 with len = 32MB
 # -bios none: tell qemu not load default openSBI
 # self bios's _start must locate at 0x20000000
-test-pflash: pflash.img
+test-pflash: $(TARGET).img
 	qemu-system-riscv64 \
 		-machine virt \
 		-cpu rv64 \
 		-m 128M \
 		-bios none \
-		-drive if=pflash,format=raw,file=pflash.img,readonly=on \
-		-nographic
+		-drive if=pflash,format=raw,file=$(TARGET).img,readonly=on \
+		-device virtio-serial-device \
+		-nographic \
+
 
 # 调试模式运行 - 使用pflash
-debug-pflash: pflash.img
+debug-pflash: $(TARGET).img
 	qemu-system-riscv64 \
 		-machine virt \
 		-cpu rv64 \
 		-m 128M \
 		-bios none \
-		-drive if=pflash,format=raw,file=pflash.img,readonly=on \
+		-drive if=pflash,format=raw,file=$(TARGET).img,readonly=on \
 		-nographic \
 		-s -S
 
@@ -103,17 +140,17 @@ test-gui: $(TARGET).bin
 		-serial stdio
 
 # 显示pflash信息
-info-pflash: pflash.img
+info-pflash: $(TARGET).img
 	@echo "PFLASH镜像信息:"
-	@ls -lh pflash.img
-	@echo "文件大小(字节): $(wc -c < pflash.img)"
+	@ls -lh $(TARGET).img
+	@echo "文件大小(字节): $(wc -c < $(TARGET).img)"
 	@echo "期望大小: 33554432 字节 (32MB)"
 	@echo "前64字节的十六进制内容:"
-	@hexdump -C pflash.img | head -4
+	@hexdump -C $(TARGET).img | head -4
 
 # 验证pflash大小
-verify-pflash: pflash.img
-	@SIZE=$(wc -c < pflash.img); \
+verify-pflash: $(TARGET).img
+	@SIZE=$(wc -c < $(TARGET).img); \
 	if [ $SIZE -eq 33554432 ]; then \
 		echo "✓ PFLASH镜像大小正确: $SIZE 字节"; \
 	else \
