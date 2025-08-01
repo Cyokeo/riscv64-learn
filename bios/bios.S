@@ -45,8 +45,6 @@ _start:
     
     # Main loop - just wait for interrupts
 halt:
-    la a0, info_msg
-    call print_string
     wfi
     j halt
 
@@ -126,7 +124,7 @@ trap_vector:
     
     # Handle external interrupt via PLIC
     call handle_external_interrupt
-    
+
     j trap_return
 
 handle_exception:
@@ -136,7 +134,7 @@ handle_exception:
 
 handle_external_interrupt:
     # Save additional registers needed for C function call
-    addi sp, sp, -64
+    addi sp, sp, -72
     sd a0, 0(sp)
     sd a1, 8(sp)
     sd a2, 16(sp)
@@ -145,6 +143,7 @@ handle_external_interrupt:
     sd a5, 40(sp)
     sd a6, 48(sp)
     sd a7, 56(sp)
+    sd ra, 64(sp)
     
     # Get interrupt ID from PLIC
     li t0, PLIC_CLAIM
@@ -155,11 +154,9 @@ handle_external_interrupt:
     bne a0, t1, complete_interrupt
     
     # Call C UART interrupt handler
-    la a0, info_msg
-    call print_string
-
     call uart_interrupt_handler
 
+    # add a call here, uart intr will work ok! WHY?
     la a0, info_msg
     call print_string
     
@@ -177,7 +174,8 @@ complete_interrupt:
     ld a5, 40(sp)
     ld a6, 48(sp)
     ld a7, 56(sp)
-    addi sp, sp, 64
+    ld ra, 64(sp)
+    addi sp, sp, 72
     
     ret
 
@@ -247,11 +245,6 @@ uart_wait:
     sb a0, 0(t0)           # 写入发送缓冲区
     ret
 
-# 异常处理程序
-exception_handler:
-    # 简单的异常处理：直接跳转到halt
-    j halt
-
 # Data section
 .section .data
 .align 8
@@ -264,6 +257,9 @@ hello_msg:
 
 info_msg:
     .asciz "Features: UART interrupts, command processing, line editing\n"
+
+exit_msg:
+    .asciz "Ready to exit interrupt!\n"
 
 prompt_msg:
     .asciz "BIOS> "

@@ -32,12 +32,12 @@ ARCH        := rv64imac
 ABI         := lp64
 INCLUDES    := -I$(INC_DIR)
 
-CFLAGS      := -O2 -march=$(ARCH) -mabi=$(ABI) -mcmodel=medany $(INCLUDES) \
+CFLAGS      := -O0 -g -march=$(ARCH) -mabi=$(ABI) -mcmodel=medany $(INCLUDES) \
                -ffreestanding -nostdlib -fno-builtin \
                -Wall -Wextra -Werror 
 
 ASFLAGS     := -march=$(ARCH) -mabi=$(ABI)
-LDFLAGS     := -T link.ld -nostdlib
+LDFLAGS     := -T link.ld -nostdlib -Map $(TARGET).map
 DEPFLAGS    = -MT $@ -MMD -MP -MF $(DEP_DIR)/$*.d
 
 # 自动生成对象文件和依赖文件
@@ -117,8 +117,10 @@ debug-pflash: $(TARGET).img
 		-m 128M \
 		-bios none \
 		-drive if=pflash,format=raw,file=$(TARGET).img,readonly=on \
+		-device virtio-serial-device \
 		-nographic \
 		-s -S
+
 
 # 调试模式运行 - 使用-bios
 debug: $(TARGET).bin
