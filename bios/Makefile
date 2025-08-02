@@ -12,6 +12,7 @@ LD      := $(CROSS_COMPILE)ld
 OBJCOPY := $(CROSS_COMPILE)objcopy
 SIZE    := $(CROSS_COMPILE)size
 OBJDUMP := $(CROSS_COMPILE)objdump
+SED     := sed
 
 # 目录结构
 SRC_DIR     := src
@@ -26,6 +27,7 @@ C_SRCS      := $(wildcard $(SRC_DIR)/*.c)
 
 # 输出文件
 TARGET      := $(BUILD_DIR)/bios
+LINK_SCRIPT := $(BUILD_DIR)/link.ld
 
 # 编译选项
 ARCH        := rv64imac
@@ -37,8 +39,12 @@ CFLAGS      := -O0 -g -march=$(ARCH) -mabi=$(ABI) -mcmodel=medany $(INCLUDES) \
                -Wall -Wextra -Werror 
 
 ASFLAGS     := -march=$(ARCH) -mabi=$(ABI)
-LDFLAGS     := -T link.ld -nostdlib -Map $(TARGET).map
+LDFLAGS     := -T $(LINK_SCRIPT) -nostdlib -Map $(TARGET).map
 DEPFLAGS    = -MT $@ -MMD -MP -MF $(DEP_DIR)/$*.d
+
+# qemu start params
+QEMU_MEM    ?= 128
+RAM_SIZE    := $(QEMU_MEM)M
 
 # 自动生成对象文件和依赖文件
 OBJS        := $(addprefix $(OBJ_DIR)/,$(notdir $(ASM_SRCS:.S=.o))) \
@@ -54,7 +60,7 @@ $(TARGET).bin: $(TARGET).elf
 	$(OBJCOPY) -O binary $< $@
 	@echo "Generated binary: $@"
 
-$(TARGET).elf: $(OBJS) link.ld
+$(TARGET).elf: $(OBJS) $(LINK_SCRIPT)
 	$(LD) $(LDFLAGS) -o $@ $(OBJS)
 	$(SIZE) $@
 
@@ -69,6 +75,11 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(DEP_DIR)
 # 包含自动生成的依赖
 -include $(wildcard $(DEP_DIR)/*.d)
 
+# gen link script file
+$(LINK_SCRIPT): link.ld.in
+	@mkdir -p $(@D)
+	$(SED) "s/@RAM_SIZE@/$(RAM_SIZE)/g" $< > $@
+	@echo "Generated linker script with RAM_SIZE=$(RAM_SIZE)"
 
 # 创建pflash镜像文件 (32MB, 填充0xFF)
 $(TARGET).img: $(TARGET).bin
@@ -90,7 +101,7 @@ test: $(TARGET).bin
 	qemu-system-riscv64 \
 		-machine virt \
 		-cpu rv64 \
-		-m 128M \
+		-m $(RAM_SIZE) \
 		-bios $(TARGET).bin \
 		-nographic
 
@@ -102,7 +113,7 @@ test-pflash: $(TARGET).img
 	qemu-system-riscv64 \
 		-machine virt \
 		-cpu rv64 \
-		-m 128M \
+		-m $(RAM_SIZE) \
 		-bios none \
 		-drive if=pflash,format=raw,file=$(TARGET).img,readonly=on \
 		-device virtio-serial-device \
@@ -114,7 +125,7 @@ debug-pflash: $(TARGET).img
 	qemu-system-riscv64 \
 		-machine virt \
 		-cpu rv64 \
-		-m 128M \
+		-m $(RAM_SIZE) \
 		-bios none \
 		-drive if=pflash,format=raw,file=$(TARGET).img,readonly=on \
 		-device virtio-serial-device \
@@ -127,7 +138,7 @@ debug: $(TARGET).bin
 	qemu-system-riscv64 \
 		-machine virt \
 		-cpu rv64 \
-		-m 128M \
+		-m $(RAM_SIZE) \
 		-bios $(TARGET).bin \
 		-nographic \
 		-s -S
@@ -137,7 +148,7 @@ test-gui: $(TARGET).bin
 	qemu-system-riscv64 \
 		-machine virt \
 		-cpu rv64 \
-		-m 128M \
+		-m $(RAM_SIZE) \
 		-bios $(TARGET).bin \
 		-serial stdio
 
