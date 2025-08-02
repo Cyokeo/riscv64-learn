@@ -61,15 +61,21 @@ SECTIONS
         *(.eh_frame)
     }
 
-    .debugs : {
-        *(.debug_*)
-    } > FLASH
+    .debug_info : { *(.debug_info*) }
+    .debug_abbrev : { *(.debug_abbrev*) }
+    .debug_line : { *(.debug_line*) }
+    .debug_str : { *(.debug_str*) }
+    .debug_frame : { *(.debug_frame*) }
+    .debug_loc : { *(.debug_loc*) }
+    .debug_aranges : {*(.debug_aranges*)}
 
     .infos : {
         *(.rela*)
         *(.riscv.attributes)
-    } > FLASH
+    }
 
+    /* (NOLOAD) means, information will not be saved in elf file */
+    /* better used to define section such as bss */
     /* check oraph section */
     .orphan_check (NOLOAD) : {
         __orphan_start = .;
