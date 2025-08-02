@@ -1,7 +1,7 @@
-## 参考
+# 参考
 链接：https://juejin.cn/post/6891922292075397127
 
-## virt 设备的内存布局
+# virt 设备的内存布局
 ```c
 static const struct MemmapEntry {
     hwaddr base;
@@ -26,7 +26,7 @@ static const struct MemmapEntry {
 ```bash
 qemu-system-riscv64: cfi.pflash01 device '/machine/virt.flash0' requires 33554432 bytes, pflash0 block backend provides 67108864 bytes
 ```
-### qemu启动后，会在MROM区域填充以下内容【二进制代码】
+## qemu启动后，会在MROM区域填充以下内容【二进制代码】
 ```c
     uint32_t reset_vec[10] = {
         0x00000297,                  /* 1:  auipc  t0, %pcrel_hi(fw_dyn) */
@@ -48,7 +48,7 @@ qemu-system-riscv64: cfi.pflash01 device '/machine/virt.flash0' requires 3355443
     };
 ```
 
-## qemu riscv64 virt设备启动流程
+# qemu riscv64 virt设备启动流程
 1. 上电后，PC被设置为0x1000，也即MROM开始的地址;
 2. 执行部分指令后，会跳转到start_addr指示的位置处；
     - 因此，如果自己给丁pflash，且不希望使用openSBI的情况下，

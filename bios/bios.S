@@ -153,14 +153,13 @@ handle_external_interrupt:
     li t1, 10
     bne a0, t1, complete_interrupt
     
+    # a0 is caller-saved, while s0-s11 is calee-saved
+    mv s2, a0
     # Call C UART interrupt handler
     call uart_interrupt_handler
-
-    # add a call here, uart intr will work ok! WHY?
-    la a0, info_msg
-    call print_string
     
 complete_interrupt:
+    mv a0, s2
     # Complete the interrupt in PLIC
     li t0, PLIC_CLAIM
     sw a0, 0(t0)               # Write back interrupt ID to complete
