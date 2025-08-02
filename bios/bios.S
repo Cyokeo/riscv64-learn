@@ -22,7 +22,8 @@ _start:
     li t0, 0x1800          # MPP=11 (机器模式)
     csrw mstatus, t0
     # Set up stack pointer - use high memory area
-    li sp, 0x80200000
+    la t0, _mstack_end
+    mv sp, t0
 
     # Clear BSS section
     call clear_bss

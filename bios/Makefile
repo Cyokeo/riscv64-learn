@@ -54,7 +54,7 @@ OBJS        := $(addprefix $(OBJ_DIR)/,$(notdir $(ASM_SRCS:.S=.o))) \
 $(shell mkdir -p $(BUILD_DIR) $(OBJ_DIR) $(DEP_DIR) >/dev/null)
 
 # default target
-all: $(TARGET).bin $(TARGET).img
+all: $(TARGET).bin
 
 $(TARGET).bin: $(TARGET).elf
 	$(OBJCOPY) -O binary $< $@
@@ -86,7 +86,7 @@ $(TARGET).img: $(TARGET).bin
 	# 创建确切32MB的文件，填充0xFF (Flash擦除状态)
 	python3 -c "with open('$@', 'wb') as f: f.write(b'\xFF' * 33554432)"
 	# 将BIOS二进制文件写入pflash开头
-	dd if=$(TARGET).bin of=$@ conv=notrunc bs=1
+	dd if=$(TARGET).bin of=$@ conv=notrunc bs=1024
 
 # 生成反汇编文件用于调试
 $(TARGET).dis: $(TARGET).elf

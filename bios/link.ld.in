@@ -12,6 +12,9 @@ MEMORY
     RAM (rwx)  : ORIGIN = 0x80000000, LENGTH = @RAM_SIZE@
 }
 
+/* *(.text.*): *() -> * match all of the object files */
+/* bios.o(.data) -> only .data in bios.o file */
+
 SECTIONS
 {
     /* 代码段 - 放在Flash中 */
@@ -46,7 +49,9 @@ SECTIONS
     /* 栈段 */
     .stack : {
         . = ALIGN(16);
-        *(.stack)
+        _mstack_start = .;
+        . = . + 2K;
+        _mstack_end = .;
     } > RAM
     
     /* 丢弃不需要的段 */
@@ -55,6 +60,25 @@ SECTIONS
         *(.note)
         *(.eh_frame)
     }
+
+    .debugs : {
+        *(.debug_*)
+    } > FLASH
+
+    .infos : {
+        *(.rela*)
+        *(.riscv.attributes)
+    } > FLASH
+
+    /* check oraph section */
+    .orphan_check (NOLOAD) : {
+        __orphan_start = .;
+        *(*)
+        __orphan_end = .;
+    }
+    ASSERT(__orphan_start == __orphan_end, "存在孤儿段!")
+    /* PROVIDE equal to _weak */
+    PROVIDE(__orphan_warning = "存在未放置段");
 }
 
 /* 定义一些有用的符号 */
