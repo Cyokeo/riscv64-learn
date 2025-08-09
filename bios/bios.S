@@ -135,7 +135,7 @@ handle_exception:
 
 handle_external_interrupt:
     # Save additional registers needed for C function call
-    addi sp, sp, -72
+    addi sp, sp, -80
     sd a0, 0(sp)
     sd a1, 8(sp)
     sd a2, 16(sp)
@@ -145,6 +145,7 @@ handle_external_interrupt:
     sd a6, 48(sp)
     sd a7, 56(sp)
     sd ra, 64(sp)
+    sd s2, 72(sp)
     
     # Get interrupt ID from PLIC
     li t0, PLIC_CLAIM
@@ -158,9 +159,9 @@ handle_external_interrupt:
     mv s2, a0
     # Call C UART interrupt handler
     call uart_interrupt_handler
-    
-complete_interrupt:
     mv a0, s2
+
+complete_interrupt:
     # Complete the interrupt in PLIC
     li t0, PLIC_CLAIM
     sw a0, 0(t0)               # Write back interrupt ID to complete
@@ -175,7 +176,8 @@ complete_interrupt:
     ld a6, 48(sp)
     ld a7, 56(sp)
     ld ra, 64(sp)
-    addi sp, sp, 72
+    ld s2, 72(sp)
+    addi sp, sp, 80
     
     ret
 
