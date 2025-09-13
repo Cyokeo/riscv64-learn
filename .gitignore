@@ -110,3 +110,6 @@ docs/latex/
 *.pdf
 *.ps
 *.dvi
+
+# build
+build
