@@ -29,14 +29,15 @@ target("run")
         add_deps("kernel")
         on_run(function (target)
             local file = "$(buidir)/$(host)/$(arch)/$(mode)/kernel"
-            print(file)
+            -- print(file)
             local flags = {
                 "-machine", "virt", "-cpu", "rv64", "-smp", "1",
                 "-bios", "default", "--no-reboot",
-                "-serial", "mon:stdio", "-m","2048M", 
+                "-nographic", "-m","2048M", 
                 "-kernel", "img/kernel"
             }
-            print(flags)
+            -- flags variable will not  extract the actual value of built-in variables
+            -- print(flags)
             os.execv("qemu-system-riscv64", flags)
         end)
     target_end()
