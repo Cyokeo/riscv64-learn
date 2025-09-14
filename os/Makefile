@@ -57,7 +57,7 @@ run: $(KERNEL)
 		-m 128M \
 		-nographic \
 		-bios default \
-		-kernel $(KERNEL)
+		-kernel build/macosx/arm64/release/kernel
 
 # 使用GDB调试
 debug: $(KERNEL)

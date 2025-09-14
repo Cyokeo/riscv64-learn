@@ -113,3 +113,7 @@ docs/latex/
 
 # build
 build
+
+*/.xmake
+*/img
+*/.clangd

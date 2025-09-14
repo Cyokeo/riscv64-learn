@@ -1,6 +1,13 @@
 # 参考博客
 - https://operating-system-in-1000-lines.vercel.app/en/05-hello-world
 
+# clangd 报错
+ - error: invalid AST
+
+## 解决办法
+https://blog.csdn.net/qq_37812160/article/details/135506142
+- 创建.clangd文件，并Remove: -mabi=lp64
+
 # RISC-V 64位简单内核
 
 这是一个使用C语言编写的简单RISC-V 64位内核程序，通过OpenSBI的ecall功能在QEMU上运行并输出"Hello World"。
