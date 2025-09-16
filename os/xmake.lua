@@ -41,3 +41,21 @@ target("run")
             os.execv("qemu-system-riscv64", flags)
         end)
     target_end()
+
+target("debug")
+        set_kind("phony")
+        set_default(false)
+        add_deps("kernel")
+        on_run(function (target)
+            -- print(file)
+            local flags = {
+                "-machine", "virt", "-cpu", "rv64", "-smp", "1",
+                "-bios", "default", "--no-reboot",
+                "-nographic", "-m","2048M", 
+                "-kernel", "img/kernel", "-s", "-S"
+            }
+            -- flags variable will not  extract the actual value of built-in variables
+            -- print(flags)
+            os.execv("qemu-system-riscv64", flags)
+        end)
+    target_end()

@@ -1,17 +1,4 @@
-# 参考博客
-- https://operating-system-in-1000-lines.vercel.app/en/05-hello-world
-- [constraints on using OpenSBI library Constraints](https://riscv.org/wp-content/uploads/2024/12/13.30-RISCV_OpenSBI_Deep_Dive_v5.pdf)
-- https://juejin.cn/post/7083769740803457038
-- https://wangzhou.github.io/
-
-# clangd 报错
- - error: invalid AST
-
-## 解决办法
-https://blog.csdn.net/qq_37812160/article/details/135506142
-- 创建.clangd文件，并Remove: -mabi=lp64
-
-# RISC-V 64位简单内核
+# RISC-V 64位增强内核# RISC-V 64位简单内核
 
 这是一个使用C语言编写的简单RISC-V 64位内核程序，通过OpenSBI的ecall功能在QEMU上运行并输出"Hello World"。
 
